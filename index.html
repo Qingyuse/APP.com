@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网站每日流量统计 - 安全访问</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            opacity: 1;
+        }
+        
+        /* 登录页面样式 */
+        #loginContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            animation: fadeIn 0.8s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .login-title {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .login-title i {
+            color: #3498db;
+        }
+        
+        .login-input-group {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        
+        .login-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .login-input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e6ed;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+        
+        .login-input-group input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .login-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1);
+        }
+        
+        .login-error {
+            color: #e74c3c;
+            margin-top: 15px;
+            font-weight: 600;
+            min-height: 24px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .login-error.show {
+            opacity: 1;
+        }
+        
+        .login-footer {
+            margin-top: 25px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        /* 主体内容样式 */
+        #mainContent {
+            display: none;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        h1 i {
+            color: #3498db;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card:nth-child(1) {
+            border-top: 5px solid #3498db;
+        }
+        
+        .stat-card:nth-child(2) {
+            border-top: 5px solid #2ecc71;
+        }
+        
+        .stat-card:nth-child(3) {
+            border-top: 5px solid #9b59b6;
+        }
+        
+        .stat-card:nth-child(4) {
+            border-top: 5px solid #f39c12;
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card:nth-child(1) .stat-icon {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+        }
+        
+        .stat-card:nth-child(2) .stat-icon {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: #2ecc71;
+        }
+        
+        .stat-card:nth-child(3) .stat-icon {
+            background-color: rgba(155, 89, 182, 0.1);
+            color: #9b59b6;
+        }
+        
+        .stat-card:nth-child(4) .stat-icon {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: #f39c12;
+        }
+        
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        
+        .stat-change {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        
+        .change-positive {
+            color: #2ecc71;
+        }
+        
+        .change-negative {
+            color: #e74c3c;
+        }
+        
+        .website-info {
+            background-color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .website-name {
+            font-size: 2rem;
+            color: #2c3e50;
+            font-weight: 700;
+        }
+        
+        .website-url {
+            font-size: 1.2rem;
+            color: #3498db;
+            background-color: #e8f4fc;
+            padding: 8px 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .website-url:hover {
+            background-color: #d4e9f9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.2);
+        }
+        
+        .website-url i {
+            font-size: 1.1rem;
+        }
+        
+        .website-metrics {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .metric-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .chart-title {
+            font-size: 1.4rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        th, td {
+            padding: 18px 20px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .date-cell {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .day-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .day-btn {
+            padding: 10px 20px;
+            background-color: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            color: #34495e;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .day-btn:hover {
+            border-color: #3498db;
+            color: #3498db;
+        }
+        
+        .day-btn.active {
+            background-color: #3498db;
+            border-color: #3498db;
+            color: white;
+        }
+        
+        .website-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 15px;
+            background-color: #e8f6ef;
+            border-radius: 20px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+        
+        .website-status.offline {
+            background-color: #fdedec;
+            color: #e74c3c;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #27ae60;
+        }
+        
+        .website-status.offline .status-dot {
+            background-color: #e74c3c;
+        }
+        
+        .website-status-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .real-time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: #2c3e50;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .today-badge {
+            background: #3498db;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .period-info {
+            text-align: center;
+            margin: 20px 0;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        
+        .logout-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background-color: #c0392b;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <h1 class="login-title"><i class="fas fa-lock"></i> 安全访问</h1>
+            <p style="color: #7f8c8d; margin-bottom: 30px; font-size: 1.1rem;">
+                请输入用户名和密码访问流量统计系统
+            </p>
+            
+            <div class="login-input-group">
+                <label for="username"><i class="fas fa-user"></i> 用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名" autocomplete="off">
+            </div>
+            
+            <div class="login-input-group">
+                <label for="password"><i class="fas fa-key"></i> 密码</label>
+                <input type="password" id="password" placeholder="请输入密码">
+            </div>
+            
+            <button class="login-btn" id="loginBtn">
+                <i class="fas fa-sign-in-alt"></i> 登录系统
+            </button>
+            
+            <div class="login-error" id="loginError">
+                <!-- 错误信息将在这里显示 -->
+            </div>
+            
+            <div class="login-footer">
+           
+            </div>
+        </div>
+    </div>
+    
+    <!-- 主内容区域 -->
+    <div class="container" id="mainContent">
+        <header>
+            <h1><i class="fas fa-chart-line"></i> 网站每日流量统计</h1>
+            
+            <div class="website-status-container">
+                <div class="website-status" id="websiteStatus">
+                    <span class="status-dot"></span>
+                    <span>在线</span>
+                </div>
+                <div class="real-time">
+                    <i class="fas fa-clock"></i>
+                    <span id="currentTime">--:--:--</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="website-info">
+            <div>
+                <div class="website-name">我的网站</div>
+                <a href="https://aiaixxpp.github.io/AIlu.com/" class="website-url" target="_blank">
+                    <i class="fas fa-link"></i> https://aiaixxpp.github.io/AIlu.com/
+                </a>
+            </div>
+            
+            <div class="website-metrics">
+                <div class="metric-item">
+                    <div class="metric-value">99.8%</div>
+                    <div class="metric-label">在线率</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">2m 35s</div>
+                    <div class="metric-label">平均停留</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value">4.2</div>
+                    <div class="metric-label">平均页数</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="period-info">最近7天数据</div>
+        
+        <div class="day-selector" id="daySelector">
+            <!-- 日期按钮将通过JavaScript动态生成 -->
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value" id="totalVisits">1,847,200</div>
+                <div class="stat-label">今日访问量 (PV)</div>
+                <div class="stat-change change-positive">
+                    <i class="fas fa-arrow-up"></i> <span id="visitsChange">12.5%</span> 较昨日
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-mouse-pointer"></i>
+                </div>
+                <div class="stat-value" id="totalClicks">6,923,400</div>
+                <div class="stat-label">今日点击量</div>
+                <div class="stat-change change-positive">
+                    <i class="fas fa-arrow-up"></i> <span id="clicksChange">8.3%</span> 较昨日
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <div class="stat-value" id="uniqueIPs">512,428</div>
+                <div class="stat-label">今日独立IP</div>
+                <div class="stat-change change-positive">
+                    <i class="fas fa-arrow-up"></i> <span id="ipsChange">5.7%</span> 较昨日
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="stat-value" id="bounceRate">32.4%</div>
+                <div class="stat-label">今日跳出率</div>
+                <div class="stat-change change-negative">
+                    <i class="fas fa-arrow-down"></i> <span id="bounceChange">2.1%</span> 较昨日
+                </div>
+            </div>
+        </div>
+        
+        <div class="charts-container">
+            <div class="chart-card">
+                <h2 class="chart-title"><i class="fas fa-chart-bar"></i> 每日访问量趋势 (独立IP)</h2>
+                <canvas id="dailyVisitsChart"></canvas>
+            </div>
+        </div>
+        
+        <h2 style="margin: 40px 0 20px; color: #2c3e50;">
+            <i class="fas fa-calendar-alt"></i> 每日详细数据
+        </h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>访问量(PV)</th>
+                    <th>点击量</th>
+                    <th>独立IP</th>
+                    <th>跳出率</th>
+                    <th>平均停留</th>
+                </tr>
+            </thead>
+            <tbody id="dailyDataTable">
+                <!-- 表格数据将通过JS动态生成 -->
+            </tbody>
+        </table>
+        
+        <div class="footer">
+            <p>© 2025 网站每日流量统计 | 数据最后更新时间: <span id="lastUpdate"></span></p>
+            
+        </div>
+        
+        <!-- 退出登录按钮 -->
+        <button class="logout-btn" id="logoutBtn">
+            <i class="fas fa-sign-out-alt"></i> 退出登录
+        </button>
+    </div>
+
+    <script>
+        // ==================== 登录验证部分 ====================
+        // 用户名和密码配置（您可以根据需要修改）
+        const VALID_USERNAME = "hei123";
+        const VALID_PASSWORD = "1234567";
+        
+        // 获取DOM元素
+        const loginContainer = document.getElementById('loginContainer');
+        const mainContent = document.getElementById('mainContent');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const body = document.body;
+        
+        // 检查是否已登录
+        function checkIfLoggedIn() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            const loginTime = localStorage.getItem('loginTime');
+            
+            // 如果已登录且登录时间在24小时内，自动登录
+            if (isLoggedIn && loginTime) {
+                const currentTime = new Date().getTime();
+                const timeDiff = currentTime - parseInt(loginTime);
+                const hoursDiff = timeDiff / (1000 * 60 * 60);
+                
+                if (hoursDiff < 24) {
+                    // 24小时内，自动登录
+                    showMainContent();
+                    return true;
+                } else {
+                    // 超过24小时，需要重新登录
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('loginTime');
+                }
+            }
+            
+            return false;
+        }
+        
+        // 显示主内容
+        function showMainContent() {
+            // 淡出登录界面
+            loginContainer.style.opacity = '0';
+            
+            setTimeout(() => {
+                // 隐藏登录界面
+                loginContainer.style.display = 'none';
+                
+                // 显示主内容
+                mainContent.style.display = 'block';
+                
+                // 初始化主应用
+                initMainApp();
+            }, 500);
+        }
+        
+        // 处理登录
+        function handleLogin() {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            // 验证用户名和密码
+            if (username === VALID_USERNAME && password === VALID_PASSWORD) {
+                // 登录成功
+                loginError.textContent = '';
+                loginError.classList.remove('show');
+                
+                // 保存登录状态
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('loginTime', new Date().getTime().toString());
+                
+                // 显示主内容
+                showMainContent();
+            } else {
+                // 登录失败
+                loginError.textContent = '用户名或密码错误，请重试';
+                loginError.classList.add('show');
+                
+                // 添加错误动画
+                usernameInput.style.animation = 'shake 0.5s ease';
+                passwordInput.style.animation = 'shake 0.5s ease';
+                
+                setTimeout(() => {
+                    usernameInput.style.animation = '';
+                    passwordInput.style.animation = '';
+                }, 500);
+                
+                // 清除密码字段
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+        
+        // 处理退出登录
+        function handleLogout() {
+            // 清除登录状态
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('loginTime');
+            
+            // 隐藏主内容
+            mainContent.style.display = 'none';
+            
+            // 显示登录界面
+            loginContainer.style.display = 'flex';
+            loginContainer.style.opacity = '1';
+            
+            // 重置登录表单
+            usernameInput.value = '';
+            passwordInput.value = '';
+            loginError.textContent = '';
+            loginError.classList.remove('show');
+            
+            // 聚焦用户名输入框
+            usernameInput.focus();
+        }
+        
+        // 初始化登录功能
+        function initLogin() {
+            // 检查是否已登录
+            if (checkIfLoggedIn()) {
+                return;
+            }
+            
+            // 添加键盘事件监听
+            usernameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    passwordInput.focus();
+                }
+            });
+            
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleLogin();
+                }
+            });
+            
+            loginBtn.addEventListener('click', handleLogin);
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+            
+            // 聚焦用户名输入框
+            usernameInput.focus();
+        }
+        
+        // ==================== 主应用部分 ====================
+        // 每日访问量范围（90万到110万）
+        const MIN_DAILY_VISITS = 900000;
+        const MAX_DAILY_VISITS = 1100000;
+        
+        // 独立IP范围（35万到55万）
+        const MIN_DAILY_IPS = 350000;
+        const MAX_DAILY_IPS = 550000;
+        
+        // 存储每天的数据，以便计算变化率
+        let dailyDataCache = {};
+        
+        // 存储昨天的时间段数据，用于与今天同一时间段比较
+        let yesterdayHourlyData = {};
+        
+        // 初始化数据
+        let websiteData = {
+            totalVisits: 1847200,
+            totalClicks: 6923400,
+            uniqueIPs: 512428,
+            bounceRate: 32.4,
+            period: 7, // 固定为7天
+            selectedDay: 0,
+            lastUpdate: new Date(),
+            lastResetDate: null,
+            dailyPeakIPs: 0,
+            growthFactor: 1.0,
+            // 添加历史数据跟踪，用于计算变化率
+            yesterdayData: {
+                visits: 1820000,
+                clicks: 6850000,
+                ips: 505000,
+                bounce: 33.1
+            },
+            // 今天的目标数据
+            todayTarget: {
+                visits: 0,
+                clicks: 0,
+                ips: 0,
+                bounce: 0
+            }
+        };
+        
+        // 生成随机访问量（90万到110万）
+        function generateRandomVisits() {
+            return Math.floor(Math.random() * (MAX_DAILY_VISITS - MIN_DAILY_VISITS + 1)) + MIN_DAILY_VISITS;
+        }
+        
+        // 生成随机独立IP数（35万到55万）
+        function generateRandomIPs() {
+            return Math.floor(Math.random() * (MAX_DAILY_IPS - MIN_DAILY_IPS + 1)) + MIN_DAILY_IPS;
+        }
+        
+        // 根据访问量生成点击量（点击量低于访问量，随机在访问量的60%-90%之间）
+        function generateClicksFromVisits(visits) {
+            const clickRate = 0.6 + Math.random() * 0.3; // 60%到90%之间
+            return Math.floor(visits * clickRate);
+        }
+        
+        // 生成跳出率（20%到40%之间）
+        function generateBounceRate() {
+            return parseFloat((20 + Math.random() * 20).toFixed(1)); // 20%到40%之间
+        }
+        
+        // 生成平均停留时间（1-5分钟）
+        function generateAvgTime() {
+            const minutes = Math.floor(Math.random() * 5) + 1;
+            const seconds = Math.floor(Math.random() * 60);
+            return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+        }
+        
+        // 初始化上次重置日期（修改为凌晨0点）
+        function initResetDate() {
+            const now = new Date();
+            const todayReset = new Date(now);
+            todayReset.setHours(0, 0, 0, 0); // 改为凌晨0点
+            
+            if (now >= todayReset) {
+                websiteData.lastResetDate = todayReset;
+            } else {
+                const yesterdayReset = new Date(todayReset);
+                yesterdayReset.setDate(yesterdayReset.getDate() - 1);
+                websiteData.lastResetDate = yesterdayReset;
+            }
+            
+            // 为今天生成目标数据
+            const visits = generateRandomVisits();
+            const ips = generateRandomIPs();
+            websiteData.todayTarget = {
+                visits: visits,
+                clicks: generateClicksFromVisits(visits),
+                ips: ips,
+                bounce: generateBounceRate()
+            };
+            
+            // 存储到缓存
+            const todayKey = getDateKey(0);
+            dailyDataCache[todayKey] = {...websiteData.todayTarget};
+            
+            // 初始化昨天的每小时数据（用于今天同一时间段的比较）
+            initYesterdayHourlyData();
+        }
+        
+        // 初始化昨天的每小时数据
+        function initYesterdayHourlyData() {
+            yesterdayHourlyData = {};
+            const yesterdayKey = getDateKey(1);
+            
+            // 如果缓存中有昨天的数据，基于它生成每小时数据
+            if (dailyDataCache[yesterdayKey]) {
+                const yesterdayTotal = dailyDataCache[yesterdayKey];
+                
+                // 生成24小时的模拟数据，模拟一天中的流量变化
+                for (let hour = 0; hour < 24; hour++) {
+                    // 计算每个小时的增长因子（基于正弦曲线）
+                    const hourProgress = hour / 24;
+                    const hourGrowthFactor = 0.5 + 0.5 * Math.sin((hourProgress * Math.PI) - Math.PI/2);
+                    
+                    // 生成每个小时的数据（基于总数据和当前时间进度）
+                    yesterdayHourlyData[hour] = {
+                        visits: Math.floor(yesterdayTotal.visits * hourGrowthFactor),
+                        clicks: Math.floor(yesterdayTotal.clicks * hourGrowthFactor),
+                        ips: Math.floor(yesterdayTotal.ips * hourGrowthFactor),
+                        bounce: yesterdayTotal.bounce * (1 - hourGrowthFactor * 0.3)
+                    };
+                }
+            } else {
+                // 如果没有昨天的数据，生成模拟的每小时数据
+                const yesterdayVisits = generateRandomVisits();
+                const yesterdayIPs = generateRandomIPs();
+                
+                for (let hour = 0; hour < 24; hour++) {
+                    // 计算每个小时的增长因子
+                    const hourProgress = hour / 24;
+                    const hourGrowthFactor = 0.5 + 0.5 * Math.sin((hourProgress * Math.PI) - Math.PI/2);
+                    
+                    yesterdayHourlyData[hour] = {
+                        visits: Math.floor(yesterdayVisits * hourGrowthFactor),
+                        clicks: Math.floor(generateClicksFromVisits(yesterdayVisits) * hourGrowthFactor),
+                        ips: Math.floor(yesterdayIPs * hourGrowthFactor),
+                        bounce: generateBounceRate() * (1 - hourGrowthFactor * 0.3)
+                    };
+                }
+            }
+        }
+        
+        // 获取日期键值
+        function getDateKey(dayOffset) {
+            const date = new Date();
+            date.setDate(date.getDate() - dayOffset);
+            return `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
+        }
+        
+        // 检查是否需要重置（修改为凌晨0点重置）
+        function checkReset() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            
+            if (currentHour === 0 && currentMinute === 0) {
+                const todayReset = new Date(now);
+                todayReset.setHours(0, 0, 0, 0); // 改为凌晨0点
+                
+                if (!websiteData.lastResetDate || websiteData.lastResetDate.getDate() !== todayReset.getDate()) {
+                    // 保存昨天的每小时数据
+                    const yesterdayDataKey = getDateKey(1);
+                    if (!dailyDataCache[yesterdayDataKey]) {
+                        // 如果没有昨天的数据，生成并保存
+                        const yesterdayVisits = generateRandomVisits();
+                        const yesterdayIPs = generateRandomIPs();
+                        dailyDataCache[yesterdayDataKey] = {
+                            visits: yesterdayVisits,
+                            clicks: generateClicksFromVisits(yesterdayVisits),
+                            ips: yesterdayIPs,
+                            bounce: generateBounceRate()
+                        };
+                    }
+                    
+                    // 重置数据
+                    websiteData.lastResetDate = todayReset;
+                    websiteData.dailyPeakIPs = 0;
+                    websiteData.growthFactor = 1.0;
+                    
+                    // 为今天生成新的目标数据
+                    const visits = generateRandomVisits();
+                    const ips = generateRandomIPs();
+                    websiteData.todayTarget = {
+                        visits: visits,
+                        clicks: generateClicksFromVisits(visits),
+                        ips: ips,
+                        bounce: generateBounceRate()
+                    };
+                    
+                    // 存储到缓存
+                    const todayKey = getDateKey(0);
+                    dailyDataCache[todayKey] = {...websiteData.todayTarget};
+                    
+                    // 重新初始化昨天的每小时数据
+                    initYesterdayHourlyData();
+                    
+                    // 重置今日数据
+                    updateTodayData();
+                    showNotification('数据已在0:00自动重置！新的一天开始了！');
+                }
+            }
+        }
+        
+        // 计算基于时间的规律性增长
+        function calculateRegularGrowth() {
+            const now = new Date();
+            
+            // 计算从上次重置到现在的时间（小时）
+            let hoursSinceReset = 0;
+            if (websiteData.lastResetDate) {
+                hoursSinceReset = (now - websiteData.lastResetDate) / (1000 * 60 * 60);
+            }
+            
+            // 计算一天中的时间进度（0-1）
+            const dayProgress = hoursSinceReset / 24;
+            
+            // 简单的正弦曲线模拟自然流量变化
+            const baseCurve = 0.5 + 0.5 * Math.sin((dayProgress * Math.PI) - Math.PI/2);
+            
+            // 记录增长因子
+            websiteData.growthFactor = Math.max(0.01, Math.min(1, baseCurve));
+            
+            return websiteData.growthFactor;
+        }
+        
+        // 获取当前小时（用于与昨天同一小时比较）
+        function getCurrentHour() {
+            const now = new Date();
+            return now.getHours();
+        }
+        
+        // 更新今天的数据
+        function updateTodayData() {
+            const growthFactor = calculateRegularGrowth();
+            
+            // 计算当前数据（基于目标数据 * 增长因子）
+            const currentVisits = Math.floor(websiteData.todayTarget.visits * growthFactor);
+            const currentClicks = Math.floor(websiteData.todayTarget.clicks * growthFactor);
+            const currentIPs = Math.floor(websiteData.todayTarget.ips * growthFactor);
+            
+            // 跳出率随流量增长而降低
+            const currentBounceRate = websiteData.todayTarget.bounce * (1 - growthFactor * 0.3);
+            
+            // 更新数据对象
+            websiteData.totalVisits = currentVisits;
+            websiteData.totalClicks = currentClicks;
+            websiteData.uniqueIPs = currentIPs;
+            websiteData.bounceRate = parseFloat(currentBounceRate.toFixed(1));
+            
+            // 计算较昨日同一时间段的变化率
+            updateChangeRates();
+            
+            // 更新页面显示
+            updateStatsDisplay();
+        }
+        
+        // 计算变化率（与昨日同一时间段比较）
+        function updateChangeRates() {
+            // 获取当前小时
+            const currentHour = getCurrentHour();
+            
+            // 获取昨天同一小时的数据
+            let yesterdaySameHourData = yesterdayHourlyData[currentHour];
+            
+            // 如果昨天这个小时没有数据，使用最近的小时数据
+            if (!yesterdaySameHourData) {
+                // 找到最近的小时数据
+                let nearestHour = currentHour;
+                for (let i = 1; i < 24; i++) {
+                    const prevHour = (currentHour - i + 24) % 24;
+                    if (yesterdayHourlyData[prevHour]) {
+                        yesterdaySameHourData = yesterdayHourlyData[prevHour];
+                        break;
+                    }
+                }
+                
+                // 如果还是没有，使用默认值
+                if (!yesterdaySameHourData) {
+                    yesterdaySameHourData = {
+                        visits: websiteData.yesterdayData.visits * 0.5,
+                        clicks: websiteData.yesterdayData.clicks * 0.5,
+                        ips: websiteData.yesterdayData.ips * 0.5,
+                        bounce: websiteData.yesterdayData.bounce
+                    };
+                }
+            }
+            
+            // 访问量变化率（与昨日同一小时比较）
+            let visitsChange = 0;
+            if (yesterdaySameHourData.visits > 0) {
+                visitsChange = ((websiteData.totalVisits - yesterdaySameHourData.visits) / yesterdaySameHourData.visits * 100);
+            }
+            document.getElementById('visitsChange').textContent = Math.abs(visitsChange).toFixed(1) + '%';
+            
+            // 点击量变化率
+            let clicksChange = 0;
+            if (yesterdaySameHourData.clicks > 0) {
+                clicksChange = ((websiteData.totalClicks - yesterdaySameHourData.clicks) / yesterdaySameHourData.clicks * 100);
+            }
+            document.getElementById('clicksChange').textContent = Math.abs(clicksChange).toFixed(1) + '%';
+            
+            // IP数变化率
+            let ipsChange = 0;
+            if (yesterdaySameHourData.ips > 0) {
+                ipsChange = ((websiteData.uniqueIPs - yesterdaySameHourData.ips) / yesterdaySameHourData.ips * 100);
+            }
+            document.getElementById('ipsChange').textContent = Math.abs(ipsChange).toFixed(1) + '%';
+            
+            // 跳出率变化率
+            let bounceChange = 0;
+            if (yesterdaySameHourData.bounce > 0) {
+                bounceChange = ((yesterdaySameHourData.bounce - websiteData.bounceRate) / yesterdaySameHourData.bounce * 100);
+            }
+            document.getElementById('bounceChange').textContent = Math.abs(bounceChange).toFixed(1) + '%';
+            
+            // 更新箭头方向
+            updateChangeArrows('visitsChange', visitsChange);
+            updateChangeArrows('clicksChange', clicksChange);
+            updateChangeArrows('ipsChange', ipsChange);
+            updateChangeArrows('bounceChange', bounceChange, true);
+        }
+        
+        // 更新变化箭头
+        function updateChangeArrows(elementId, changeValue, isBounce = false) {
+            const element = document.getElementById(elementId);
+            const changeElement = element.closest('.stat-change');
+            
+            if (isBounce) {
+                // 跳出率降低是好的
+                if (changeValue > 0) {
+                    changeElement.className = 'stat-change change-positive';
+                    changeElement.querySelector('i').className = 'fas fa-arrow-down';
+                } else {
+                    changeElement.className = 'stat-change change-negative';
+                    changeElement.querySelector('i').className = 'fas fa-arrow-up';
+                }
+            } else {
+                // 其他指标增长是好的
+                if (changeValue > 0) {
+                    changeElement.className = 'stat-change change-positive';
+                    changeElement.querySelector('i').className = 'fas fa-arrow-up';
+                } else {
+                    changeElement.className = 'stat-change change-negative';
+                    changeElement.querySelector('i').className = 'fas fa-arrow-down';
+                }
+            }
+        }
+        
+        // 更新统计数据显示
+        function updateStatsDisplay() {
+            document.getElementById('totalVisits').textContent = websiteData.totalVisits.toLocaleString();
+            document.getElementById('totalClicks').textContent = websiteData.totalClicks.toLocaleString();
+            document.getElementById('uniqueIPs').textContent = websiteData.uniqueIPs.toLocaleString();
+            document.getElementById('bounceRate').textContent = websiteData.bounceRate.toFixed(1) + '%';
+            
+            // 更新最后更新时间
+            const now = new Date();
+            websiteData.lastUpdate = now;
+            const timeStr = now.toLocaleString('zh-CN');
+            document.getElementById('lastUpdate').textContent = timeStr;
+        }
+        
+        // 生成日期标签
+        function generateDateLabels(days) {
+            const labels = [];
+            for (let i = days-1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+                const weekday = weekdays[date.getDay()];
+                labels.push(`${month}/${day} (周${weekday})`);
+            }
+            return labels;
+        }
+        
+        // 生成日期按钮
+        function generateDayButtons(days) {
+            const daySelector = document.getElementById('daySelector');
+            daySelector.innerHTML = '';
+            
+            for (let i = days-1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+                const weekday = weekdays[date.getDay()];
+                
+                const button = document.createElement('button');
+                button.className = `day-btn ${i === 0 ? 'active' : ''}`;
+                button.dataset.day = i;
+                button.innerHTML = `
+                    ${month}/${day} (周${weekday})
+                    ${i === 0 ? '<br><small>今天</small>' : i === 1 ? '<br><small>昨天</small>' : ''}
+                `;
+                
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.day-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                    
+                    websiteData.selectedDay = parseInt(this.dataset.day);
+                    updateDailyData();
+                });
+                
+                daySelector.appendChild(button);
+            }
+        }
+        
+        // 生成历史数据
+        function generateHistoricalData(dayOffset = 0) {
+            const dateKey = getDateKey(dayOffset);
+            
+            // 如果缓存中有数据，直接使用
+            if (dailyDataCache[dateKey]) {
+                return dailyDataCache[dateKey];
+            }
+            
+            // 生成新的历史数据
+            const visits = generateRandomVisits();
+            const ips = generateRandomIPs();
+            const clicks = generateClicksFromVisits(visits);
+            const bounceRate = generateBounceRate();
+            
+            // 存储到缓存
+            dailyDataCache[dateKey] = { visits, clicks, ips, bounce: bounceRate };
+            
+            return dailyDataCache[dateKey];
+        }
+        
+        // 更新统计数据
+        function updateStats() {
+            // 根据选中的日期调整数据
+            const dayOffset = websiteData.selectedDay;
+            
+            if (dayOffset === 0) {
+                // 今天，使用基于时间段的规律性数据
+                updateTodayData();
+            } else {
+                // 历史数据，使用固定的规律性数据
+                const data = generateHistoricalData(dayOffset);
+                
+                document.getElementById('totalVisits').textContent = data.visits.toLocaleString();
+                document.getElementById('totalClicks').textContent = data.clicks.toLocaleString();
+                document.getElementById('uniqueIPs').textContent = data.ips.toLocaleString();
+                document.getElementById('bounceRate').textContent = data.bounce.toFixed(1) + '%';
+                
+                // 对于历史数据，仍然使用与前一天的比较
+                const prevDayData = generateHistoricalData(dayOffset + 1);
+                
+                // 访问量变化率
+                let visitsChange = 0;
+                if (prevDayData.visits > 0) {
+                    visitsChange = ((data.visits - prevDayData.visits) / prevDayData.visits * 100);
+                }
+                document.getElementById('visitsChange').textContent = Math.abs(visitsChange).toFixed(1) + '%';
+                
+                // 点击量变化率
+                let clicksChange = 0;
+                if (prevDayData.clicks > 0) {
+                    clicksChange = ((data.clicks - prevDayData.clicks) / prevDayData.clicks * 100);
+                }
+                document.getElementById('clicksChange').textContent = Math.abs(clicksChange).toFixed(1) + '%';
+                
+                // IP数变化率
+                let ipsChange = 0;
+                if (prevDayData.ips > 0) {
+                    ipsChange = ((data.ips - prevDayData.ips) / prevDayData.ips * 100);
+                }
+                document.getElementById('ipsChange').textContent = Math.abs(ipsChange).toFixed(1) + '%';
+                
+                // 跳出率变化率
+                let bounceChange = 0;
+                if (prevDayData.bounce > 0) {
+                    bounceChange = ((prevDayData.bounce - data.bounce) / prevDayData.bounce * 100);
+                }
+                document.getElementById('bounceChange').textContent = Math.abs(bounceChange).toFixed(1) + '%';
+                
+                // 更新箭头方向
+                updateChangeArrows('visitsChange', visitsChange);
+                updateChangeArrows('clicksChange', clicksChange);
+                updateChangeArrows('ipsChange', ipsChange);
+                updateChangeArrows('bounceChange', bounceChange, true);
+                
+                // 更新最后更新时间
+                const now = new Date();
+                websiteData.lastUpdate = now;
+                const timeStr = now.toLocaleString('zh-CN');
+                document.getElementById('lastUpdate').textContent = timeStr;
+            }
+        }
+        
+        // 生成表格数据
+        function generateTableData() {
+            const days = websiteData.period;
+            const tableBody = document.getElementById('dailyDataTable');
+            tableBody.innerHTML = '';
+            
+            for (let i = days-1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const month = date.getMonth() + 1;
+                const day = date.getDate();
+                const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+                const weekday = weekdays[date.getDay()];
+                
+                // 生成每日数据
+                let data;
+                if (i === 0) {
+                    // 今天，使用当前数据
+                    data = {
+                        visits: websiteData.totalVisits,
+                        clicks: websiteData.totalClicks,
+                        ips: websiteData.uniqueIPs,
+                        bounce: websiteData.bounceRate
+                    };
+                } else {
+                    // 历史数据
+                    data = generateHistoricalData(i);
+                }
+                
+                const avgTime = generateAvgTime();
+                
+                const row = document.createElement('tr');
+                if (i === websiteData.selectedDay) {
+                    row.style.backgroundColor = '#e8f4fc';
+                }
+                
+                row.innerHTML = `
+                    <td class="date-cell">${month}/${day} (周${weekday})${i === 0 ? ' <span class="today-badge">今日</span>' : i === 1 ? ' <span style="color:#7f8c8d;font-size:0.9em;">昨天</span>' : ''}</td>
+                    <td>${data.visits.toLocaleString()}</td>
+                    <td>${data.clicks.toLocaleString()}</td>
+                    <td>${data.ips.toLocaleString()}</td>
+                    <td>${data.bounce.toFixed(1)}%</td>
+                    <td>${avgTime}</td>
+                `;
+                
+                // 点击行可以选中该日期
+                row.addEventListener('click', function() {
+                    websiteData.selectedDay = i;
+                    updateDailyData();
+                });
+                
+                tableBody.appendChild(row);
+            }
+        }
+        
+        // 初始化图表
+        let dailyVisitsChart;
+        
+        function initCharts() {
+            const days = websiteData.period;
+            const dateLabels = generateDateLabels(days);
+            
+            // 每日访问量趋势图（独立IP）
+            const visitsCtx = document.getElementById('dailyVisitsChart').getContext('2d');
+            const visitsData = [];
+            
+            for (let i = 0; i < days; i++) {
+                const dayOffset = days - 1 - i;
+                
+                if (i === days - 1) {
+                    // 今天的数据
+                    visitsData.push(websiteData.uniqueIPs);
+                } else {
+                    // 历史数据
+                    const data = generateHistoricalData(dayOffset);
+                    visitsData.push(data.ips);
+                }
+            }
+            
+            if (dailyVisitsChart) dailyVisitsChart.destroy();
+            
+            dailyVisitsChart = new Chart(visitsCtx, {
+                type: 'line',
+                data: {
+                    labels: dateLabels,
+                    datasets: [
+                        {
+                            label: '独立IP数',
+                            data: visitsData,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return `独立IP: ${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                drawBorder: false
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: '独立IP数'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 更新每日数据
+        function updateDailyData() {
+            updateStats();
+            generateTableData();
+            
+            // 更新日期按钮状态
+            document.querySelectorAll('.day-btn').forEach((btn, index) => {
+                btn.classList.remove('active');
+                if (parseInt(btn.dataset.day) === websiteData.selectedDay) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // 更新图表
+            initCharts();
+        }
+        
+        // 更新当前时间
+        function updateTimeDisplay() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        
+        // 显示通知
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background-color: #2ecc71;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                font-weight: 600;
+                animation: fadeInOut 3s ease-in-out;
+            `;
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateY(-20px); }
+                    15% { opacity: 1; transform: translateY(0); }
+                    85% { opacity: 1; transform: translateY(0); }
+                    100% { opacity: 0; transform: translateY(-20px); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+                style.remove();
+            }, 3000);
+        }
+        
+        // 初始化主应用
+        function initMainApp() {
+            try {
+                initResetDate();
+                generateDayButtons(websiteData.period);
+                updateDailyData();
+                updateTimeDisplay();
+                
+                // 每秒更新时间和检查重置
+                setInterval(() => {
+                    updateTimeDisplay();
+                    checkReset();
+                    
+                    // 如果是今天的数据，则每秒更新一次
+                    if (websiteData.selectedDay === 0) {
+                        updateTodayData();
+                        
+                        // 更新表格中今天的行
+                        const todayRow = document.querySelector('tr td.date-cell:contains("今天")')?.closest('tr');
+                        if (todayRow) {
+                            todayRow.cells[1].textContent = websiteData.totalVisits.toLocaleString();
+                            todayRow.cells[2].textContent = websiteData.totalClicks.toLocaleString();
+                            todayRow.cells[3].textContent = websiteData.uniqueIPs.toLocaleString();
+                            todayRow.cells[4].textContent = websiteData.bounceRate.toFixed(1) + '%';
+                        }
+                    }
+                }, 1000);
+                
+                // 每30秒刷新一次图表
+                setInterval(() => {
+                    if (websiteData.selectedDay === 0) {
+                        initCharts();
+                    }
+                }, 30000);
+            } catch (error) {
+                console.error('初始化主应用时出错:', error);
+                alert('初始化应用时出现错误，请刷新页面重试。');
+            }
+        }
+        
+        // 页面加载完成后初始化登录功能
+        window.addEventListener('DOMContentLoaded', function() {
+            try {
+                initLogin();
+            } catch (error) {
+                console.error('初始化登录时出错:', error);
+                // 如果登录初始化失败，至少显示登录页面
+                document.getElementById('loginContainer').style.display = 'flex';
+                document.getElementById('loginError').textContent = '页面初始化错误，请刷新重试';
+                document.getElementById('loginError').classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>
